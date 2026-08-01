@@ -1,5 +1,5 @@
 package com.pushpendra.opspilot.model;
 
 public enum IncidentStatus {
-    OPEN
+    OPEN, IN_PROGRESS, RESOLVED, CLOSED
 }

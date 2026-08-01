@@ -41,6 +41,10 @@ public class Incident {
         this.createdAt = createdAt;
     }
 
+    public void updateStatus(IncidentStatus newStatus) {
+        this.status = newStatus;
+    }
+
     public UUID getId() { return id; }
     public String getTitle() { return title; }
     public String getService() { return service; }

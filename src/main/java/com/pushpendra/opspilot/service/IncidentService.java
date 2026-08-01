@@ -2,6 +2,7 @@ package com.pushpendra.opspilot.service;
 
 import com.pushpendra.opspilot.dto.CreateIncidentRequest;
 import com.pushpendra.opspilot.dto.IncidentResponse;
+import com.pushpendra.opspilot.dto.UpdateIncidentStatusRequest;
 import com.pushpendra.opspilot.model.Incident;
 import com.pushpendra.opspilot.model.IncidentStatus;
 import com.pushpendra.opspilot.repository.IncidentRepository;
@@ -40,6 +41,13 @@ public class IncidentService {
 
     public Optional<IncidentResponse> findById(UUID id) {
         return incidentRepository.findById(id).map(this::toResponse);
+    }
+
+    public Optional<IncidentResponse> updateStatus(UUID id, UpdateIncidentStatusRequest request) {
+        return incidentRepository.findById(id).map(incident -> {
+            incident.updateStatus(request.status());
+            return toResponse(incidentRepository.save(incident));
+        });
     }
 
     private IncidentResponse toResponse(Incident incident) {
