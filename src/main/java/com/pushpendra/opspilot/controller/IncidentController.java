@@ -2,6 +2,7 @@ package com.pushpendra.opspilot.controller;
 
 import com.pushpendra.opspilot.dto.CreateIncidentRequest;
 import com.pushpendra.opspilot.dto.IncidentResponse;
+import com.pushpendra.opspilot.dto.UpdateIncidentStatusRequest;
 import com.pushpendra.opspilot.service.IncidentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,15 @@ public class IncidentController {
     @GetMapping("/{id}")
     public ResponseEntity<IncidentResponse> findById(@PathVariable UUID id) {
         return incidentService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<IncidentResponse> updateStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateIncidentStatusRequest request) {
+        return incidentService.updateStatus(id, request)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
