@@ -2,6 +2,7 @@ package com.pushpendra.opspilot.controller;
 
 import com.pushpendra.opspilot.dto.CreateIncidentRequest;
 import com.pushpendra.opspilot.dto.IncidentResponse;
+import com.pushpendra.opspilot.dto.IncidentStatsResponse;
 import com.pushpendra.opspilot.dto.UpdateIncidentStatusRequest;
 import com.pushpendra.opspilot.model.IncidentStatus;
 import com.pushpendra.opspilot.model.Severity;
@@ -41,6 +42,11 @@ public class IncidentController {
             @RequestParam(required = false) String service,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(incidentService.findAll(status, severity, service, pageable));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<IncidentStatsResponse> stats() {
+        return ResponseEntity.ok(incidentService.getStats());
     }
 
     @GetMapping("/{id}")

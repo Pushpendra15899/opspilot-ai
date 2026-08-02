@@ -2,6 +2,8 @@ package com.pushpendra.opspilot.controller;
 
 import com.pushpendra.opspilot.dto.CreateIncidentRequest;
 import com.pushpendra.opspilot.dto.IncidentResponse;
+import com.pushpendra.opspilot.dto.IncidentStatsResponse;
+import com.pushpendra.opspilot.dto.IncidentTrendPoint;
 import com.pushpendra.opspilot.dto.UpdateIncidentStatusRequest;
 import com.pushpendra.opspilot.exception.IncidentNotFoundException;
 import com.pushpendra.opspilot.exception.InvalidStatusTransitionException;
@@ -18,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -141,5 +144,21 @@ class IncidentControllerTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(new UpdateIncidentStatusRequest(IncidentStatus.IN_PROGRESS))))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void statsReturnsAggregatedCounts() throws Exception {
+        IncidentStatsResponse stats = new IncidentStatsResponse(
+                10, 3, 2, 4, 1, 5,
+                List.of(new IncidentTrendPoint(LocalDate.now(), 2)));
+        when(incidentService.getStats()).thenReturn(stats);
+
+        mockMvc.perform(get("/api/incidents/stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(10))
+                .andExpect(jsonPath("$.open").value(3))
+                .andExpect(jsonPath("$.critical").value(5))
+                .andExpect(jsonPath("$.trend").isArray())
+                .andExpect(jsonPath("$.trend[0].count").value(2));
     }
 }
