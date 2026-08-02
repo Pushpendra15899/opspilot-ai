@@ -3,14 +3,18 @@ package com.pushpendra.opspilot.service;
 import com.pushpendra.opspilot.dto.CreateIncidentRequest;
 import com.pushpendra.opspilot.dto.IncidentResponse;
 import com.pushpendra.opspilot.dto.UpdateIncidentStatusRequest;
+import com.pushpendra.opspilot.exception.IncidentNotFoundException;
+import com.pushpendra.opspilot.exception.InvalidStatusTransitionException;
 import com.pushpendra.opspilot.model.Incident;
 import com.pushpendra.opspilot.model.IncidentStatus;
+import com.pushpendra.opspilot.model.Severity;
 import com.pushpendra.opspilot.repository.IncidentRepository;
+import com.pushpendra.opspilot.repository.IncidentSpecifications;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,21 +37,30 @@ public class IncidentService {
         return toResponse(incidentRepository.save(incident));
     }
 
-    public List<IncidentResponse> findAll() {
-        return incidentRepository.findAll().stream()
+    public Page<IncidentResponse> findAll(IncidentStatus status, Severity severity, String service, Pageable pageable) {
+        return incidentRepository
+                .findAll(IncidentSpecifications.filterBy(status, severity, service), pageable)
+                .map(this::toResponse);
+    }
+
+    public IncidentResponse findById(UUID id) {
+        return incidentRepository.findById(id)
                 .map(this::toResponse)
-                .toList();
+                .orElseThrow(() -> new IncidentNotFoundException(id));
     }
 
-    public Optional<IncidentResponse> findById(UUID id) {
-        return incidentRepository.findById(id).map(this::toResponse);
-    }
+    public IncidentResponse updateStatus(UUID id, UpdateIncidentStatusRequest request) {
+        Incident incident = incidentRepository.findById(id)
+                .orElseThrow(() -> new IncidentNotFoundException(id));
 
-    public Optional<IncidentResponse> updateStatus(UUID id, UpdateIncidentStatusRequest request) {
-        return incidentRepository.findById(id).map(incident -> {
-            incident.updateStatus(request.status());
-            return toResponse(incidentRepository.save(incident));
-        });
+        IncidentStatus current = incident.getStatus();
+        IncidentStatus target = request.status();
+        if (!current.canTransitionTo(target)) {
+            throw new InvalidStatusTransitionException(current, target);
+        }
+
+        incident.updateStatus(target);
+        return toResponse(incidentRepository.save(incident));
     }
 
     private IncidentResponse toResponse(Incident incident) {

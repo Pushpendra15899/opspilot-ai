@@ -3,13 +3,18 @@ package com.pushpendra.opspilot.controller;
 import com.pushpendra.opspilot.dto.CreateIncidentRequest;
 import com.pushpendra.opspilot.dto.IncidentResponse;
 import com.pushpendra.opspilot.dto.UpdateIncidentStatusRequest;
+import com.pushpendra.opspilot.model.IncidentStatus;
+import com.pushpendra.opspilot.model.Severity;
 import com.pushpendra.opspilot.service.IncidentService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -28,23 +33,23 @@ public class IncidentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<IncidentResponse>> findAll() {
-        return ResponseEntity.ok(incidentService.findAll());
+    public ResponseEntity<Page<IncidentResponse>> findAll(
+            @RequestParam(required = false) IncidentStatus status,
+            @RequestParam(required = false) Severity severity,
+            @RequestParam(required = false) String service,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(incidentService.findAll(status, severity, service, pageable));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<IncidentResponse> findById(@PathVariable UUID id) {
-        return incidentService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(incidentService.findById(id));
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<IncidentResponse> updateStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateIncidentStatusRequest request) {
-        return incidentService.updateStatus(id, request)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(incidentService.updateStatus(id, request));
     }
 }
