@@ -6,6 +6,7 @@ import com.pushpendra.opspilot.dto.UpdateIncidentStatusRequest;
 import com.pushpendra.opspilot.model.IncidentStatus;
 import com.pushpendra.opspilot.model.Severity;
 import com.pushpendra.opspilot.service.IncidentService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/incidents")
+@Tag(name = "Incidents", description = "Create, retrieve, filter, and transition incidents")
 public class IncidentController {
 
     private final IncidentService incidentService;
