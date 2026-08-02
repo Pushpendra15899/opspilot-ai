@@ -2,6 +2,8 @@ package com.pushpendra.opspilot.service;
 
 import com.pushpendra.opspilot.dto.CreateIncidentRequest;
 import com.pushpendra.opspilot.dto.IncidentResponse;
+import com.pushpendra.opspilot.dto.IncidentStatsResponse;
+import com.pushpendra.opspilot.dto.IncidentTrendPoint;
 import com.pushpendra.opspilot.dto.UpdateIncidentStatusRequest;
 import com.pushpendra.opspilot.exception.IncidentNotFoundException;
 import com.pushpendra.opspilot.exception.InvalidStatusTransitionException;
@@ -15,10 +17,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class IncidentService {
+
+    private static final int TREND_DAYS = 14;
 
     private final IncidentRepository incidentRepository;
 
@@ -61,6 +72,35 @@ public class IncidentService {
 
         incident.updateStatus(target);
         return toResponse(incidentRepository.save(incident));
+    }
+
+    public IncidentStatsResponse getStats() {
+        long total = incidentRepository.count();
+        long open = incidentRepository.countByStatus(IncidentStatus.OPEN);
+        long inProgress = incidentRepository.countByStatus(IncidentStatus.IN_PROGRESS);
+        long resolved = incidentRepository.countByStatus(IncidentStatus.RESOLVED);
+        long closed = incidentRepository.countByStatus(IncidentStatus.CLOSED);
+        long critical = incidentRepository.countBySeverityInAndStatusNot(
+                EnumSet.of(Severity.P1, Severity.P2), IncidentStatus.CLOSED);
+
+        return new IncidentStatsResponse(total, open, inProgress, resolved, closed, critical, buildTrend());
+    }
+
+    private List<IncidentTrendPoint> buildTrend() {
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        LocalDate startDate = today.minusDays(TREND_DAYS - 1);
+        Instant since = startDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+
+        Map<LocalDate, Long> countsByDay = incidentRepository.countCreatedPerDaySince(since).stream()
+                .collect(Collectors.toMap(
+                        IncidentRepository.DailyIncidentCount::getDay,
+                        IncidentRepository.DailyIncidentCount::getTotal));
+
+        List<IncidentTrendPoint> trend = new ArrayList<>();
+        for (LocalDate date = startDate; !date.isAfter(today); date = date.plusDays(1)) {
+            trend.add(new IncidentTrendPoint(date, countsByDay.getOrDefault(date, 0L)));
+        }
+        return trend;
     }
 
     private IncidentResponse toResponse(Incident incident) {
