@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-opspilot}
+      POSTGRES_USER: ${POSTGRES_USER:-opspilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opspilot}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - opspilot-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-opspilot} -d ${POSTGRES_DB:-opspilot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-opspilot}
+      DB_USERNAME: ${POSTGRES_USER:-opspilot}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-opspilot}
+    networks:
+      - opspilot-net
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  opspilot-net:
+
+volumes:
+  postgres_data:
