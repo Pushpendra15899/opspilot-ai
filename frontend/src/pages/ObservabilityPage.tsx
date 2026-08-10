@@ -117,9 +117,10 @@ export function ObservabilityPage() {
                   maxMetric="hikaricp.connections.max"
                   format={(v) => v.toFixed(0)}
                 />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <MetricCard metricName="hikaricp.connections.idle" label="Idle" />
                   <MetricCard metricName="hikaricp.connections.pending" label="Pending" />
+                  <MetricCard metricName="hikaricp.connections.timeout" label="Timeouts" />
                 </div>
               </div>
             </CardBody>

@@ -1,32 +1,29 @@
-# React + TypeScript + Vite
+# OpsPilot Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + TypeScript operations console for OpsPilot. See the [repository root README](../README.md)
+for the full project overview, architecture, and setup instructions.
 
-Currently, two official plugins are available:
+## Quick reference
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm ci          # install
+npm run dev     # http://localhost:5173, proxies /api and /actuator to localhost:8080
+npm run lint    # oxlint
+npm run build   # tsc -b (type-check) && vite build
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Structure
+
+```
+src/
+├── pages/          # route-level views (Dashboard, Incidents, Observability, API Docs)
+├── components/      # ui/ (design system primitives), dashboard/, incidents/, observability/
+├── api/             # axios calls to the backend REST + Actuator endpoints
+├── hooks/           # TanStack Query hooks wrapping the api/ layer
+├── lib/             # formatting, presentation, and small pure helpers
+└── types/           # shared TypeScript types matching backend DTOs
+```
+
+The dev server proxy (`vite.config.ts`) forwards `/api`, `/actuator`, `/v3/api-docs`, and
+`/swagger-ui` to `http://localhost:8080`, so the frontend can talk to a backend running either via
+`./mvnw spring-boot:run`, Docker Compose, or `kubectl port-forward` without any code changes.
