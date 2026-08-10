@@ -1,4 +1,4 @@
-import { useActuatorHealth } from "@/hooks/useSystemHealth";
+import { useActuatorHealthComponents } from "@/hooks/useSystemHealth";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -19,7 +19,7 @@ interface HealthPanelProps {
 }
 
 export function HealthPanel({ compact }: HealthPanelProps) {
-  const { data, isLoading, isError, error, refetch } = useActuatorHealth();
+  const { data, isLoading, isError, error, refetch } = useActuatorHealthComponents();
 
   if (isLoading) {
     return (
