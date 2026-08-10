@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opspilot-app
+  namespace: opspilot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opspilot-app
+  template:
+    metadata:
+      labels:
+        app: opspilot-app
+    spec:
+      containers:
+        - name: opspilot-app
+          image: opspilot-ai-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: opspilot-config
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: opspilot-db-credentials
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: opspilot-db-credentials
+                  key: DB_PASSWORD
+          # Readiness reflects app + database reachability (see
+          # management.endpoint.health.group.readiness.include). When this
+          # fails, Kubernetes removes the pod from the Service's endpoints -
+          # no more traffic is routed to it - without killing the container.
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          # Liveness only reflects whether the JVM/process itself is alive
+          # and unblocked, deliberately excluding "db" - a database outage
+          # should not cause Kubernetes to restart this container.
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opspilot-app
+  namespace: opspilot
+spec:
+  type: LoadBalancer
+  selector:
+    app: opspilot-app
+  ports:
+    - port: 8080
+      targetPort: 8080
